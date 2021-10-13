@@ -37,6 +37,16 @@ BoardData::BoardData(const ShmAllocator<void>& shm_valloc, const BoardConfig& c)
     : pins{shm_valloc}, uart_channels{shm_valloc}, direct_storages{shm_valloc}, frame_buffers{shm_valloc},
       device_allocation_map{shm_valloc}, raw_bank{shm_valloc}, a8_bank{shm_valloc}, a16_bank{shm_valloc},
       a32_bank{shm_valloc}, a64_bank{shm_valloc}, mtx_bank{shm_valloc} {
+
+    configure_pins(c);
+    configure_uart_channels(shm_valloc, c);
+    configure_direct_storages(shm_valloc, c);
+    configure_frame_buffers(shm_valloc, c);
+
+    calculate_device_memory_allocations(shm_valloc, c);
+}
+
+void BoardData::configure_pins(const BoardConfig& c) {
     auto sorted_pins = c.pins;
     std::sort(sorted_pins.begin(), sorted_pins.end());
 
@@ -63,44 +73,52 @@ BoardData::BoardData(const ShmAllocator<void>& shm_valloc, const BoardConfig& c)
             pin.can_digital_write = driver.board_write;
         }
     }
+}
 
+void BoardData::configure_uart_channels(const ShmAllocator<void>& shm_valloc, const BoardConfig& c) {
     uart_channels.reserve(c.uart_channels.size());
     for (const auto& conf : c.uart_channels) {
         auto& data = uart_channels.emplace_back(shm_valloc);
         data.baud_rate = conf.baud_rate;
         data.rx_pin_override = conf.rx_pin_override;
         data.tx_pin_override = conf.tx_pin_override;
-        data.max_buffered_rx = static_cast<std::uint16_t>(conf.rx_buffer_length);
-        data.max_buffered_tx = static_cast<std::uint16_t>(conf.tx_buffer_length);
+        data.max_buffered_rx = static_cast<uint16_t>(conf.rx_buffer_length);
+        data.max_buffered_tx = static_cast<uint16_t>(conf.tx_buffer_length);
     }
+}
 
+void BoardData::configure_direct_storages(const ShmAllocator<void>& shm_valloc, const BoardConfig& c) {
     direct_storages.reserve(c.sd_cards.size());
     for (const auto& conf : c.sd_cards) {
         auto& data = direct_storages.emplace_back(shm_valloc);
-        data.bus = BoardData::DirectStorage::Bus::SPI;
+        data.bus = DirectStorage::Bus::SPI;
         data.accessor = conf.cspin;
         {
             auto rt_str = conf.root_dir.generic_string();
             data.root_dir.assign(std::string_view{rt_str});
         }
     }
+}
 
+void BoardData::configure_frame_buffers(const ShmAllocator<void>& shm_valloc, const BoardConfig& c) {
     frame_buffers.reserve(c.frame_buffers.size());
     for (const auto& conf : c.frame_buffers) {
         auto& data = frame_buffers.emplace_back(shm_valloc);
         data.key = conf.key;
-        data.direction = BoardData::FrameBuffer::Direction{static_cast<std::uint8_t>(conf.direction)};
+        data.direction = FrameBuffer::Direction{static_cast<uint8_t>(conf.direction)};
     }
+}
 
-    std::size_t r8s_needed = 0;
-    std::size_t r16s_needed = 0;
-    std::size_t r32s_needed = 0;
-    std::size_t r64s_needed = 0;
-    std::size_t a8s_needed = 0;
-    std::size_t a16s_needed = 0;
-    std::size_t a32s_needed = 0;
-    std::size_t a64s_needed = 0;
-    std::size_t mtxs_needed = 0;
+void BoardData::calculate_device_memory_allocations(const ShmAllocator<void>& shm_valloc, const BoardConfig& c) {
+    size_t r8s_needed = 0;
+    size_t r16s_needed = 0;
+    size_t r32s_needed = 0;
+    size_t r64s_needed = 0;
+    size_t a8s_needed = 0;
+    size_t a16s_needed = 0;
+    size_t a32s_needed = 0;
+    size_t a64s_needed = 0;
+    size_t mtxs_needed = 0;
 
     for (const auto& bd : c.board_devices) {
         r8s_needed += bd.spec.get().r8_count * bd.count;
@@ -116,11 +134,11 @@ BoardData::BoardData(const ShmAllocator<void>& shm_valloc, const BoardConfig& c)
 
     smce_rt::BoardDeviceAllocationIntBases bases{};
     bases.r64 = 0;
-    bases.r32 = bases.r64 + r64s_needed * sizeof(std::uint64_t);
-    bases.r16 = bases.r32 + r32s_needed * sizeof(std::uint32_t);
-    bases.r8 = bases.r16 + r16s_needed * sizeof(std::uint16_t);
+    bases.r32 = bases.r64 + r64s_needed * sizeof(uint64_t);
+    bases.r16 = bases.r32 + r32s_needed * sizeof(uint32_t);
+    bases.r8 = bases.r16 + r16s_needed * sizeof(uint16_t);
 
-    raw_bank.resize(bases.r8 + r8s_needed * sizeof(std::uint8_t));
+    raw_bank.resize(bases.r8 + r8s_needed * sizeof(uint8_t));
     a8_bank.resize(a8s_needed);
     a16_bank.resize(a16s_needed);
     a32_bank.resize(a32s_needed);
@@ -130,10 +148,10 @@ BoardData::BoardData(const ShmAllocator<void>& shm_valloc, const BoardConfig& c)
     for (const auto& bd : c.board_devices) {
         bases.count = bd.count;
         device_allocation_map.emplace(ShmString{bd.spec.get().name, shm_valloc}, bases);
-        bases.r8 += bd.spec.get().r8_count * sizeof(std::uint8_t);
-        bases.r16 += bd.spec.get().r16_count * sizeof(std::uint16_t);
-        bases.r32 += bd.spec.get().r32_count * sizeof(std::uint32_t);
-        bases.r64 += bd.spec.get().r64_count * sizeof(std::uint64_t);
+        bases.r8 += bd.spec.get().r8_count * sizeof(uint8_t);
+        bases.r16 += bd.spec.get().r16_count * sizeof(uint16_t);
+        bases.r32 += bd.spec.get().r32_count * sizeof(uint32_t);
+        bases.r64 += bd.spec.get().r64_count * sizeof(uint64_t);
         bases.a8 += bd.spec.get().a8_count;
         bases.a16 += bd.spec.get().a16_count;
         bases.a32 += bd.spec.get().a32_count;

@@ -51,6 +51,39 @@ namespace smce {
     return it->root_dir;
 }
 
+int BoardView::digital_read(int pin, std::string msg) {
+    auto vpin = pins[pin];
+
+    if (!vpin.exists())
+        msg = "Pin does not exist";
+    if (!vpin.digital().can_read())
+        msg = "Pin has no digital driver capable of reading";
+    if (vpin.locked())
+        msg = "Pin is in use by another device";
+    if (vpin.get_direction() != VirtualPin::DataDirection::in)
+        msg = "Pin is in output mode";
+
+    if (msg.empty())
+        return vpin.digital().read();
+    return -1;
+}
+
+void BoardView::digital_write(int pin, bool value, std::string msg) {
+    auto vpin = pins[pin];
+
+    if (!vpin.exists())
+        msg = "Pin does not exist";
+    if (!vpin.digital().can_write())
+        msg = "Pin has no digital driver capable of reading";
+    if (vpin.locked())
+        msg = "Pin is in use by another device";
+    if (vpin.get_direction() != VirtualPin::DataDirection::out)
+        msg = "Pin is in input mode";
+
+    if (msg.empty())
+        return vpin.digital().write(value);
+}
+
 [[nodiscard]] bool VirtualAnalogDriver::exists() noexcept { return m_bdat && m_idx < m_bdat->pins.size(); }
 
 [[nodiscard]] bool VirtualAnalogDriver::can_read() noexcept { return exists() && m_bdat->pins[m_idx].can_analog_read; }
@@ -117,9 +150,12 @@ VirtualPin VirtualPins::operator[](std::size_t pin_id) noexcept {
 
 [[nodiscard]] std::size_t VirtualUartBuffer::max_size() noexcept {
     // clang-format off
-    return exists() ? (m_dir == Direction::rx
-                           ? m_bdat->uart_channels[m_index].max_buffered_rx
-                           : m_bdat->uart_channels[m_index].max_buffered_tx) : 0;
+    if (exists()) {
+        return m_dir == Direction::rx
+                   ? m_bdat->uart_channels[m_index].max_buffered_rx
+                   : m_bdat->uart_channels[m_index].max_buffered_tx;
+    }
+    return 0;
     // clang-format on
 }
 

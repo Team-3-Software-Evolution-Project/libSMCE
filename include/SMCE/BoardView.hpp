@@ -255,6 +255,8 @@ class SMCE_API BoardView {
 
     /// Obtain the path to the root file of a storage device
     [[nodiscard]] std::string_view storage_get_root(Link link, std::uint16_t accessor) noexcept;
+    int digital_read(int pin, std::string msg);
+    void digital_write(int pin, bool value, std::string msg);
 };
 
 class SMCE_API VirtualUarts::Iterator {

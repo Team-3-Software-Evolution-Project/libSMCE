@@ -45,41 +45,22 @@ void pinMode(int pin, bool mode) {
 }
 
 int digitalRead(int pin) {
-    auto error = [=](const char* msg) {
-        return std::cerr << "ERROR: digitalRead(" << pin << "): " << msg << std::endl, 0;
-    };
     maybe_init();
-    auto vpin = board_view.pins[pin];
 
-    if (!vpin.exists())
-        return error("Pin does not exist");
-    if (!vpin.digital().can_read())
-        return error("Pin has no digital driver capable of reading");
-    if (vpin.locked())
-        return error("Pin is in use by another device");
-    if (vpin.get_direction() != VirtualPin::DataDirection::in)
-        return error("Pin is in output mode");
-
-    return vpin.digital().read();
+    std::string msg;
+    auto result = board_view.digital_read(pin, msg);
+    if (msg.empty())
+        return result;
+    return std::cerr << "ERROR: digitalRead(" << pin << "): " << msg << std::endl, 0;
 }
 
 void digitalWrite(int pin, bool value) {
-    auto error = [=](const char* msg) {
-        std::cerr << "ERROR: digitalWrite(" << pin << ", " << (value ? "HIGH" : "LOW") << "): " << msg << std::endl;
-    };
     maybe_init();
-    auto vpin = board_view.pins[pin];
 
-    if (!vpin.exists())
-        return error("Pin does not exist");
-    if (!vpin.digital().can_write())
-        return error("Pin has no digital driver capable of reading");
-    if (vpin.locked())
-        return error("Pin is in use by another device");
-    if (vpin.get_direction() != VirtualPin::DataDirection::out)
-        return error("Pin is in input mode");
-
-    vpin.digital().write(value);
+    std::string msg;
+    board_view.digital_write(pin, value, msg);
+    if (!msg.empty())
+        std::cerr << "ERROR: digitalWrite(" << pin << ", " << (value ? "HIGH" : "LOW") << "): " << msg << std::endl;
 }
 
 int analogRead(int pin) {
