@@ -77,3 +77,40 @@ TEST_CASE("Mixed INO/C++ sources", "[Board]") {
         std::cerr << tc.build_log().second;
     REQUIRE_FALSE(ec);
 }
+
+TEST_CASE("Arduino Characters", "[Board]"){
+    smce::Toolchain tc{SMCE_PATH};
+    REQUIRE(!tc.check_suitable_environment());
+    smce::Sketch sk{SKETCHES_PATH "characters", {.fqbn = "arduino:avr:nano"}};
+    const auto ec = tc.compile(sk);
+    if (ec)
+        std::cerr << tc.build_log().second;
+    REQUIRE_FALSE(ec);
+    smce::Board br{};
+    smce::BoardConfig bc{
+        /* .pins = */{0, 2},
+        /* .gpio_drivers = */{
+            smce::BoardConfig::GpioDrivers{
+                0,
+                smce::BoardConfig::GpioDrivers::DigitalDriver{true, false}
+            },
+            smce::BoardConfig::GpioDrivers{
+                2,
+                smce::BoardConfig::GpioDrivers::DigitalDriver{false, true}
+            },
+        }
+    };
+    REQUIRE(br.configure(std::move(bc)));
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.start());
+
+    auto bv = br.view();
+    auto pin2 = bv.pins[2];
+    REQUIRE(pin2.exists());
+    auto pin2d = pin2.digital();
+    REQUIRE(pin2d.exists());
+    REQUIRE_FALSE(pin2d.can_read());
+    REQUIRE(pin2d.can_write());
+
+    test_pin_delayable(pin2d, false, 16384, 1ms);
+}
