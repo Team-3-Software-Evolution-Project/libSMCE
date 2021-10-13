@@ -78,7 +78,7 @@ TEST_CASE("Mixed INO/C++ sources", "[Board]") {
     REQUIRE_FALSE(ec);
 }
 
-TEST_CASE("Arduino Characters", "[Board]"){
+TEST_CASE("Arduino Characters", "[Board]") {
     smce::Toolchain tc{SMCE_PATH};
     REQUIRE(!tc.check_suitable_environment());
     smce::Sketch sk{SKETCHES_PATH "characters", {.fqbn = "arduino:avr:nano"}};
