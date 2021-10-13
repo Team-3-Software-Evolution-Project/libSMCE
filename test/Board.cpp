@@ -87,6 +87,7 @@ TEST_CASE("Arduino Characters", "[Board]"){
         std::cerr << tc.build_log().second;
     REQUIRE_FALSE(ec);
     smce::Board br{};
+    // clang-format off
     smce::BoardConfig bc{
         /* .pins = */{0, 2},
         /* .gpio_drivers = */{
@@ -100,6 +101,7 @@ TEST_CASE("Arduino Characters", "[Board]"){
             },
         }
     };
+    // clang-format on
     REQUIRE(br.configure(std::move(bc)));
     REQUIRE(br.attach_sketch(sk));
     REQUIRE(br.start());
