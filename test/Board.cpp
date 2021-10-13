@@ -93,7 +93,7 @@ TEST_CASE("Arduino Characters", "[Board]"){
         /* .gpio_drivers = */{
             smce::BoardConfig::GpioDrivers{
                 0,
-                smce::BoardConfig::GpioDrivers::DigitalDriver{true, false}
+                smce::BoardConfig::GpioDrivers::DigitalDriver{false, true}
             },
             smce::BoardConfig::GpioDrivers{
                 2,
@@ -114,5 +114,16 @@ TEST_CASE("Arduino Characters", "[Board]"){
     REQUIRE_FALSE(pin2d.can_read());
     REQUIRE(pin2d.can_write());
 
-    test_pin_delayable(pin2d, false, 16384, 1ms);
+    test_pin_delayable(pin2d, true, 16384, 1ms);
+
+    auto pin0 = bv.pins[0];
+    REQUIRE(pin0.exists());
+    auto pin0d = pin0.digital();
+    REQUIRE(pin0d.exists());
+    REQUIRE_FALSE(pin0d.can_read());
+    REQUIRE(pin0d.can_write());
+
+    test_pin_delayable(pin0d, true, 16384, 1ms);
+
+
 }
