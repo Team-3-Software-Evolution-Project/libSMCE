@@ -124,6 +124,5 @@ TEST_CASE("Arduino Characters", "[Board]") {
     REQUIRE(pin0d.can_write());
 
     test_pin_delayable(pin0d, true, 16384, 1ms);
-
-
+    REQUIRE(br.stop());
 }
