@@ -162,3 +162,33 @@ TEST_CASE("Board - Check conditions for configure", "[Board]") {
     REQUIRE_FALSE(br.status() == smce::Board::Status::configured);
     REQUIRE_FALSE(br.configure({}));
 }
+
+/**
+ * Test that starting the board only works
+ * when a compiled sketch is attached and when the board is not already running.
+ */
+TEST_CASE("Board - Check conditions for start", "[Board]") {
+    smce::Toolchain tc{SMCE_PATH};
+    REQUIRE(!tc.check_suitable_environment());
+
+    smce::Sketch sk{SKETCHES_PATH "noop", {.fqbn = "arduino:avr:nano"}};
+    smce::Board br{};
+    REQUIRE(br.configure({}));
+
+    // Board has no attached sketch => Starting NOT possible
+    REQUIRE_FALSE(br.start());
+
+    // Board has attached but not compiled sketch => Starting NOT possible
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE_FALSE(br.start());
+
+    // Board has attached and compiled sketch => Starting possible
+    tc.compile(sk);
+    REQUIRE(sk.is_compiled());
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.start());
+    REQUIRE(br.status() == smce::Board::Status::running);
+
+    // Board is already started => Starting NOT possible
+    REQUIRE_FALSE(br.start());
+}
