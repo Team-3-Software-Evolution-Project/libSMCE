@@ -11,42 +11,6 @@
 
 using namespace std::literals;
 
-/**
- * Test that attaching sketches to the board and resetting of the board
- * only works when the board is not running or suspended.
- */
-TEST_CASE("Board attach_sketches and reset", "[Board]") {
-    smce::Toolchain tc{SMCE_PATH};
-    REQUIRE(!tc.check_suitable_environment());
-
-    smce::Sketch sk{SKETCHES_PATH "noop", {.fqbn = "arduino:avr:nano"}};
-    tc.compile(sk);
-    REQUIRE(sk.is_compiled());
-
-    smce::Sketch sk2{SKETCHES_PATH "noop", {.fqbn = "arduino:avr:nano"}};
-    tc.compile(sk2);
-    REQUIRE(sk2.is_compiled());
-
-    smce::Board br{};
-    REQUIRE(br.configure({}));
-    REQUIRE(br.attach_sketch(sk));
-
-    REQUIRE(br.start());
-    REQUIRE(br.status() == smce::Board::Status::running);
-    REQUIRE_FALSE(br.attach_sketch(sk2));
-    REQUIRE_FALSE(br.reset());
-
-    REQUIRE(br.suspend());
-    REQUIRE(br.status() == smce::Board::Status::suspended);
-    REQUIRE_FALSE(br.attach_sketch(sk2));
-    REQUIRE_FALSE(br.reset());
-
-    REQUIRE(br.stop());
-    REQUIRE(br.status() == smce::Board::Status::stopped);
-    REQUIRE(br.attach_sketch(sk2));
-    REQUIRE(br.reset());
-}
-
 TEST_CASE("Board contracts", "[Board]") {
     smce::Toolchain tc{SMCE_PATH};
     REQUIRE(!tc.check_suitable_environment());
@@ -112,4 +76,89 @@ TEST_CASE("Mixed INO/C++ sources", "[Board]") {
     if (ec)
         std::cerr << tc.build_log().second;
     REQUIRE_FALSE(ec);
+}
+
+/**
+ * Test that attaching sketches to the board and resetting of the board only works
+ * when the board is not running and not suspended.
+ */
+TEST_CASE("Board - Check conditions for attach_sketch and reset", "[Board]") {
+    smce::Toolchain tc{SMCE_PATH};
+    REQUIRE(!tc.check_suitable_environment());
+
+    smce::Sketch sk{SKETCHES_PATH "noop", {.fqbn = "arduino:avr:nano"}};
+    tc.compile(sk);
+    REQUIRE(sk.is_compiled());
+
+    smce::Sketch sk2{SKETCHES_PATH "noop", {.fqbn = "arduino:avr:nano"}};
+    tc.compile(sk2);
+    REQUIRE(sk2.is_compiled());
+
+    // Board is clean, so not running yet => Attaching sketches and resetting possible
+    smce::Board br{};
+    REQUIRE(br.status() == smce::Board::Status::clean);
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.reset());
+
+    // Board is configured, so not running yet => Attaching sketches and resetting possible
+    REQUIRE(br.configure({}));
+    REQUIRE(br.status() == smce::Board::Status::configured);
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.reset());
+
+    // Board is running => Attaching sketches and resetting NOT possible
+    REQUIRE(br.configure({}));
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.start());
+    REQUIRE(br.status() == smce::Board::Status::running);
+    REQUIRE_FALSE(br.attach_sketch(sk2));
+    REQUIRE_FALSE(br.reset());
+
+    // Board is suspended => Attaching sketches and resetting NOT possible
+    REQUIRE(br.suspend());
+    REQUIRE(br.status() == smce::Board::Status::suspended);
+    REQUIRE_FALSE(br.attach_sketch(sk2));
+    REQUIRE_FALSE(br.reset());
+
+    // Board is stopped => Attaching sketches and resetting possible
+    REQUIRE(br.stop());
+    REQUIRE(br.status() == smce::Board::Status::stopped);
+    REQUIRE(br.attach_sketch(sk2));
+    REQUIRE(br.reset());
+}
+
+/**
+ * Test that configuring the board only works
+ * when the board is clean or already configured.
+ */
+TEST_CASE("Board - Check conditions for configure", "[Board]") {
+    smce::Toolchain tc{SMCE_PATH};
+    REQUIRE(!tc.check_suitable_environment());
+
+    smce::Sketch sk{SKETCHES_PATH "noop", {.fqbn = "arduino:avr:nano"}};
+    tc.compile(sk);
+    REQUIRE(sk.is_compiled());
+    smce::Board br{};
+
+    // Board is both clean and configured => Configuration possible
+    REQUIRE(br.status() == smce::Board::Status::clean);
+    REQUIRE_FALSE(br.status() == smce::Board::Status::configured);
+    REQUIRE(br.configure({}));
+
+    // Board is not clean, but configured => Configuration possible
+    REQUIRE_FALSE(br.status() == smce::Board::Status::clean);
+    REQUIRE(br.status() == smce::Board::Status::configured);
+    REQUIRE(br.configure({}));
+
+    // Starting and stopping of board
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.start());
+    REQUIRE(br.status() == smce::Board::Status::running);
+    REQUIRE(br.stop());
+    REQUIRE(br.status() == smce::Board::Status::stopped);
+
+    // Board is neither clean nor configured => Configuration NOT possible
+    REQUIRE_FALSE(br.status() == smce::Board::Status::clean);
+    REQUIRE_FALSE(br.status() == smce::Board::Status::configured);
+    REQUIRE_FALSE(br.configure({}));
 }
