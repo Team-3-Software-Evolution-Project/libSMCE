@@ -190,7 +190,6 @@ struct SMCE_INTERNAL BoardData {
     void configure_direct_storages(const ShmAllocator<void>& shm_valloc, const BoardConfig& c);
     void configure_frame_buffers(const ShmAllocator<void>& shm_valloc, const BoardConfig& c);
     void calculate_device_memory_allocations(const ShmAllocator<void>& shm_valloc, const BoardConfig& c);
-
 };
 
 } // namespace smce
