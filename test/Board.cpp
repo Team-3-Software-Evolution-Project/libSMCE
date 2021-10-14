@@ -144,7 +144,7 @@ TEST_CASE("Board - Check conditions for attach_sketch and reset", "[Board]") {
 
 /**
  * Test that configuring the board only works
- * when the board is clean or already configured.
+ * when the board is clean or only configured (so it has not been started before or similar).
  */
 TEST_CASE("Board - Check conditions for configure", "[Board]") {
     smce::Toolchain tc{SMCE_PATH};
@@ -155,12 +155,12 @@ TEST_CASE("Board - Check conditions for configure", "[Board]") {
     REQUIRE(sk.is_compiled());
     smce::Board br{};
 
-    // Board is both clean and configured => Configuration possible
+    // Board is both clean and not configured => Configuration possible
     REQUIRE(br.status() == smce::Board::Status::clean);
     REQUIRE_FALSE(br.status() == smce::Board::Status::configured);
     REQUIRE(br.configure({}));
 
-    // Board is not clean, but configured => Configuration possible
+    // Board is not clean, but only configured (so it has not been started before or similar) => Configuration possible
     REQUIRE_FALSE(br.status() == smce::Board::Status::clean);
     REQUIRE(br.status() == smce::Board::Status::configured);
     REQUIRE(br.configure({}));
