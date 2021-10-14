@@ -4,15 +4,17 @@ void setup() {
 }
 
 void loop() {
-    //digitalWrite(1, isAlpha('A'));
-   // bool var = isAlpha('A') && isAlphaNumeric('2') && isAscii('!') && isPrintable('!') && isControl('\n');
 
+    // Should write true if all parts works as expected.
+    // Correct values are tested here.
     digitalWrite(2, isAlpha('A') && isAlphaNumeric('2') && isAscii('!') && isPrintable('!') && isControl('\n')
                         && isDigit('2') && isGraph('|') && isHexadecimalDigit('F') && isLowerCase('z')
                         && isPunct('.') && isSpace(' ') && isUpperCase('Z') && isWhitespace('\t'));
 
-    digitalWrite(0, !(isAlpha('1') && isAlphaNumeric('a')  && isControl('1')
-                        && isDigit('a') && isGraph(' ') && isHexadecimalDigit('a') && isLowerCase('Z')
-                        && isPunct(',') && isSpace('a') && isUpperCase('z') && isWhitespace(' ')));
+    // Should write true if all parts works as expected.
+    // Incorrect values are tested here.
+    digitalWrite(0, !isAlpha('1') && !isAlphaNumeric('\n') && !isControl('1')
+                        && !isDigit('a') && !isGraph(' ') && !isHexadecimalDigit('&') && !isLowerCase('Z')
+                        && !isPunct('1') && !isSpace('a') && !isUpperCase('z') && !isWhitespace('2'));
     delay(1);
 }
