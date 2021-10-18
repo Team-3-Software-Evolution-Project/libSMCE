@@ -29,6 +29,11 @@
 
 using namespace std::literals;
 
+/*
+ * Tests the GPIO driver to check that configured pins can be used as expected.
+ * The test connects to the arduino file pins.ino and checks the expected values on pins using
+ * functions from BoardView.
+ */
 TEST_CASE("BoardView GPIO", "[BoardView]") {
     smce::Toolchain tc{SMCE_PATH};
     REQUIRE(!tc.check_suitable_environment());
@@ -38,6 +43,7 @@ TEST_CASE("BoardView GPIO", "[BoardView]") {
         std::cerr << tc.build_log().second;
     REQUIRE_FALSE(ec);
     smce::Board br{};
+
     // clang-format off
     smce::BoardConfig bc{
         /* .pins = */{0, 2, 3, 4},
