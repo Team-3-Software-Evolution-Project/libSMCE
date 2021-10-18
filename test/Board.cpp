@@ -77,3 +77,25 @@ TEST_CASE("Mixed INO/C++ sources", "[Board]") {
         std::cerr << tc.build_log().second;
     REQUIRE_FALSE(ec);
 }
+
+TEST_CASE("Start the camera", "[Board]"){
+    smce::Toolchain tc {SMCE_PATH};
+    REQUIRE(!tc.check_suitable_environment());
+    smce::Sketch sk{SKETCHES_PATH "camera", {.fqbn = "arduino:avr:nano"}};
+    const auto ec = tc.compile(sk);
+    if (ec)
+        std::cerr << tc.build_log().second;
+    REQUIRE_FALSE(ec);
+    /*
+    smce::Board br{};
+    smce::BoardConfig bc{
+         // ?
+    };
+    REQUIRE(br.configure({}));
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.start());
+    // ?
+    auto bv = br.view();
+     */
+
+}
