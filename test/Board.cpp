@@ -145,7 +145,7 @@ TEST_CASE("Arduino Characters", "[Board]") {
     /*
      * The result from the Characters functions with WRONG values are written to pin 0.
      * This test will check that the written value is the expected.
-     * Returns true if all functions returned false.
+     * Returns true if all the functions in characters.ino returned false.
      */
     test_pin_delayable(pin0d, true, 16384, 1ms);
     REQUIRE(br.stop());
