@@ -17,6 +17,5 @@ void loop() {
 
     // Writing and reading on analog pins
     analogWrite(4, analogRead(3));
-    delay(1);
     delayMicroseconds(1000);
 }
