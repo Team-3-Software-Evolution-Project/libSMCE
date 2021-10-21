@@ -34,6 +34,7 @@ using namespace std::literals;
 /* 
  * This test case checks if the wifi and mqtt preproc libraries can be successfully compiled on a sketch.
  */
+
 TEST_CASE("WiFi intended use", "[WiFi]") {
     smce::Toolchain tc{SMCE_PATH};
     REQUIRE(!tc.check_suitable_environment());
@@ -56,6 +57,7 @@ TEST_CASE("WiFi intended use", "[WiFi]") {
  * It includes not just compiling the sketch with the SD library,
  * but also tests the correct workflow of the filesystem.
  */
+
 TEST_CASE("SD polyfill", "[SD File]") {
     smce::Toolchain tc{SMCE_PATH};
     REQUIRE(!tc.check_suitable_environment());

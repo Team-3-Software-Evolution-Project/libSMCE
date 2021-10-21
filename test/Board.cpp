@@ -78,7 +78,7 @@ TEST_CASE("Mixed INO/C++ sources", "[Board]") {
     REQUIRE_FALSE(ec);
 }
 
-TEST_CASE("Start the camera", "[Board]"){
+TEST_CASE("Start the camera", "[Board]") {
     smce::Toolchain tc {SMCE_PATH};
     REQUIRE(!tc.check_suitable_environment());
     smce::Sketch sk{SKETCHES_PATH "camera", {.fqbn = "arduino:avr:nano"}};
