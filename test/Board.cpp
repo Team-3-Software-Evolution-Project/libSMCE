@@ -86,16 +86,4 @@ TEST_CASE("Start the camera", "[Board]"){
     if (ec)
         std::cerr << tc.build_log().second;
     REQUIRE_FALSE(ec);
-    /*
-    smce::Board br{};
-    smce::BoardConfig bc{
-         // ?
-    };
-    REQUIRE(br.configure({}));
-    REQUIRE(br.attach_sketch(sk));
-    REQUIRE(br.start());
-    // ?
-    auto bv = br.view();
-     */
-
 }
