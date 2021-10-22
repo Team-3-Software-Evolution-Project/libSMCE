@@ -29,10 +29,10 @@
 using namespace std::literals;
 
 #if SMCE_ARDRIVO_MQTT
-/* 
+/*
  * Polyfills - Implementing a feature that the board does not generally support - like SD and WiFi.
  * This test case checks if the wifi and mqtt preproc libraries can be successfully compiled on a sketch.
- */ 
+ */
 
 TEST_CASE("WiFi intended use", "[WiFi]") {
     smce::Toolchain tc{SMCE_PATH};
@@ -51,7 +51,7 @@ TEST_CASE("WiFi intended use", "[WiFi]") {
 
 #endif // SMCE_ARDRIVO_MQTT
 
-/* 
+/*
  * This test checks whether the SD polyfilling is working.
  * It includes not just compiling the sketch with the SD library, but also tests the correct workflow of the filesystem.
  */
