@@ -71,7 +71,7 @@ TEST_CASE("BoardView GPIO", "[BoardView]") {
     auto bv = br.view();
     REQUIRE(bv.valid());
 
-    SECTION("Test: Configuration + Digital read and write on Pin 0 and 2."){
+    SECTION("Test: Configuration + Digital read and write on Pin 0 and 2.") {
         auto pin0 = bv.pins[0];
         REQUIRE(pin0.exists());
         auto pin0d = pin0.digital();
@@ -101,12 +101,12 @@ TEST_CASE("BoardView GPIO", "[BoardView]") {
         test_pin_delayable(pin2d, false, 16384, 1ms);
     }
 
-    SECTION("Test: A non existing pin can't be used."){
+    SECTION("Test: A non existing pin can't be used.") {
         auto pin1 = bv.pins[1];
         REQUIRE_FALSE(pin1.exists());
     }
 
-    SECTION("Test: Configuration + analog read and write on Pin 3 and 4."){
+    SECTION("Test: Configuration + analog read and write on Pin 3 and 4.") {
         auto pin3 = bv.pins[3];
         REQUIRE(pin3.exists());
         auto pin3a = pin3.analog();
