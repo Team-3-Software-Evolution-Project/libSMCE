@@ -173,7 +173,7 @@ TEST_CASE("Arduino Characters", "[Board]") {
     REQUIRE(br.stop());
 }
 
- /** 
+/**
  * Test that attaching sketches to the board and resetting of the board only works
  * when the board is not running and not suspended.
  */
