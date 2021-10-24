@@ -14,7 +14,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+set(CMAKE_CXX_COMPILER "MinGW/bin")
 cmake_minimum_required (VERSION 3.16)
 project (stduart)
 

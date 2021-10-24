@@ -30,6 +30,10 @@ cmake_policy (SET CMP0011 NEW)
 # CMake info
 message ("CMAKE_VERSION: ${CMAKE_VERSION}")
 
+message("********************************************** HELLO! ***********************************************")
+
+
+
 # System info
 unset (CMAKE_BINARY_DIR)
 include (CMakeDetermineSystem)

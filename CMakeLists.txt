@@ -18,6 +18,11 @@
 cmake_minimum_required (VERSION 3.16)
 cmake_policy (SET CMP0022 NEW)
 
+set(CMAKE_CXX_COMPILER "MinGW/bin")
+message("hello world!")
+message("path ${CMAKE_CXX_COMPILER}")
+
+
 project (libSMCE VERSION 1.4.0.5)
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake/Modules")
 include (UserConfigVars)
@@ -253,3 +258,5 @@ list (REMOVE_ITEM CPACK_COMPONENTS_ALL "Unspecified")
 include (CPack)
 
 set (CMAKE_MSVC_RUNTIME_LIBRARY "${PREV_CMAKE_MSVC_RUNTIME_LIBRARY}")
+
+message("path: ${CMAKE_CXX_COMPILER}")

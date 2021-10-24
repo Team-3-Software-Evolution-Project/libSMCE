@@ -24,8 +24,11 @@ set (COMPILER_INCLUDE_DIRS)
 file (WRITE "${PROJECT_BINARY_DIR}/empty" "")
 if (MSVC AND NOT CMAKE_CXX_SIMULATE_ID)
   # FIXME - Handle VS < 2015 as well as Windows < 10
-
+  message("***** before *****")
+  message("path ${CMAKE_CXX_COMPILER}")
   list (GET CMAKE_CXX_COMPILER 0 CL_EXECUTABLE)
+  message("***** after *****")
+  message("path ${CMAKE_CXX_COMPILER}")
   if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.20")
     cmake_path (GET CL_EXECUTABLE PARENT_PATH CL_BINDIR)
     cmake_path (CONVERT "${CL_BINDIR}/../../../include" TO_NATIVE_PATH_LIST MSSTL_INCDIR NORMALIZE)
