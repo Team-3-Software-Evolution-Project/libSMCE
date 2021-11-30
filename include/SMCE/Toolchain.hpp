@@ -111,8 +111,12 @@ class SMCE_API Toolchain {
 
     std::string find_MSVC();
     std::string search_env_path(const std::string& compiler);
+    void search_for_compilers(const std::string& compiler, const std::vector<std::string>& versions,
+                                     std::vector<Toolchain::CompilerInformation>& compilers);
     Toolchain::CompilerInformation create_compiler_information(const std::string& path,
                                                                const std::string& name, const std::string& version);
+
+    std::string default_compiler();
     bool generate_toolchain_file(Toolchain::CompilerInformation& compiler);
 };
 

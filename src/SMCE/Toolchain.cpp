@@ -49,6 +49,7 @@ namespace bp = boost::process;
 namespace smce {
 namespace detail {
 
+
 struct toolchain_error_category : public std::error_category {
   public:
     const char* name() const noexcept override { return "smce.toolchain"; }
@@ -325,6 +326,9 @@ std::error_code Toolchain::compile(Sketch& sketch) noexcept {
 }
 
 std::vector<Toolchain::CompilerInformation> Toolchain::find_compilers() {
+    std::vector<std::string> gccVersionsCpp11 = {"4.3", "4.4", "4.5", "4.6", "4.7", "4.8"};
+    std::vector<std::string> clangVersionsCpp11 = {"13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3.9", "3.8",
+                                                   "3.7", "3.6", "3.5", "3.4", "3.3"};
     std::vector<Toolchain::CompilerInformation> compilers;
     std::string compiler_path;
 
@@ -332,19 +336,21 @@ std::vector<Toolchain::CompilerInformation> Toolchain::find_compilers() {
     if(!compiler_path.empty())
         compilers.push_back(create_compiler_information(compiler_path, "msvc", "TBD"));
 
-    compiler_path = search_env_path("g++");
-    if(!compiler_path.empty())
-        compilers.push_back(create_compiler_information(compiler_path, "gcc", "TBD"));
+    if (default_compiler() != "MSVC") {
+        search_for_compilers("g++", gccVersionsCpp11, compilers);
+    }
 
-    compiler_path = search_env_path("clang++");
+    search_for_compilers("clang++", clangVersionsCpp11, compilers);
+
+    compiler_path = search_env_path("clang-cl");
     if(!compiler_path.empty())
-        compilers.push_back(create_compiler_information(compiler_path, "clang", "TBD"));
+        compilers.push_back(create_compiler_information(compiler_path, "clang-cl", "TBD"));
 
     return compilers;
 }
 
 bool Toolchain::select_compiler(Toolchain::CompilerInformation& compiler) {
-    if(compiler.name.empty()){
+    if(compiler.name.empty()) {
         std::cerr << "No compiler selected!";
         return false;
     }
@@ -392,6 +398,20 @@ std::string Toolchain::search_env_path(const std::string& compiler) {
     return path;
 }
 
+void Toolchain::search_for_compilers(const std::string& compiler, const std::vector<std::string>& versions, std::vector<Toolchain::CompilerInformation>& compilers) {
+
+    std::string compiler_path = search_env_path(compiler);
+    if(!compiler_path.empty())
+        compilers.push_back(create_compiler_information(compiler_path, compiler, "TBD"));
+
+    for(int i = 0; i < versions.size(); i++) {
+        compiler_path = search_env_path(compiler + "-" + versions[i]);
+        if(!compiler_path.empty())
+            compilers.push_back(create_compiler_information(compiler_path, compiler + "-" + versions[i], "TBD"));
+    }
+
+}
+
 Toolchain::CompilerInformation Toolchain::create_compiler_information(const std::string& path, const std::string& name, const std::string& version) {
     Toolchain::CompilerInformation compilerInformation;
 
@@ -409,13 +429,27 @@ bool Toolchain::generate_toolchain_file(Toolchain::CompilerInformation& compiler
     boost::filesystem::path path{"../../CMake/Toolchain/toolchain_"+compiler.name+"_"+compiler.version+".cmake"};
     boost::filesystem::ofstream ofs{path};
 
-    if(ofs.is_open()){
+    if(ofs.is_open()) {
         ofs << "set(CMAKE_CXX_COMPILER \""+compiler.path+"\")";
         ofs.close();
         return true;
     }
 
     return false;
+}
+
+std::string Toolchain::default_compiler() {
+    std::string default_compiler =
+#if defined(__clang__)
+        "CLANG";
+#elif defined(__GNUG__)
+        "GCC";
+#elif defined(_MSC_VER)
+        "MSVC";
+#else
+        "ERROR";
+#endif
+    return default_compiler;
 }
 
 } // namespace smce
