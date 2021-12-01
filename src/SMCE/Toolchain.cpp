@@ -404,7 +404,7 @@ void Toolchain::search_for_compilers(const std::string& compiler, const std::vec
     if(!compiler_path.empty())
         compilers.push_back(create_compiler_information(compiler_path, compiler, "TBD"));
 
-    for(int i = 0; i < versions.size(); i++) {
+    for(int i = 0; i < (int)versions.size(); i++) {
         compiler_path = search_env_path(compiler + "-" + versions[i]);
         if(!compiler_path.empty())
             compilers.push_back(create_compiler_information(compiler_path, compiler + "-" + versions[i], "TBD"));
