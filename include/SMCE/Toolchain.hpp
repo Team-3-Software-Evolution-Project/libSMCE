@@ -72,7 +72,7 @@ class SMCE_API Toolchain {
 
   public:
 
-    struct CompilerInformation{
+    struct CompilerInformation {
         std::string name;
         std::string version;
         std::string path;
@@ -106,20 +106,24 @@ class SMCE_API Toolchain {
      **/
     std::error_code compile(Sketch& sketch) noexcept;
 
+    /**
+     * Find compilers
+     */
     std::vector<Toolchain::CompilerInformation> find_compilers();
-    bool select_compiler(Toolchain::CompilerInformation& compiler);
+    std::vector<Toolchain::CompilerInformation> find_MSVC(std::vector<Toolchain::CompilerInformation>& compilers);
+    std::vector<Toolchain::CompilerInformation> find_MSVC_buildTools(std::vector<Toolchain::CompilerInformation>& compilers);
 
-    std::string find_MSVC();
     std::string search_env_path(const std::string& compiler);
-    void search_for_compilers(const std::string& compiler, const std::vector<std::string>& versions,
-                                     std::vector<Toolchain::CompilerInformation>& compilers);
-    Toolchain::CompilerInformation create_compiler_information(const std::string& path,
-                                                               const std::string& name, const std::string& version);
-
+    void look_for_compilers_on_path(const std::string& compiler, const std::vector<std::string>& versions, std::vector<Toolchain::CompilerInformation>& compilers);
+    Toolchain::CompilerInformation create_compiler_information(const std::string& path, const std::string& name, const std::string& version);
     std::string default_compiler();
     bool generate_toolchain_file(Toolchain::CompilerInformation& compiler);
-};
 
+    /**
+     * Select compiler
+     */
+    bool select_compiler(Toolchain::CompilerInformation& compiler);
+};
 
 } // namespace smce
 

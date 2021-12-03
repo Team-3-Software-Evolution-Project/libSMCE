@@ -22,6 +22,12 @@
 
 cmake_minimum_required (VERSION 3.12)
 
+set (CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+if (MSVC)
+  string (APPEND CMAKE_EXE_LINKER_FLAGS "  /NODEFAULTLIB:oldnames.lib /MANIFEST:NO")
+endif ()
+
 project (Sketch CXX)
 
 set (MODULES_DIR "${SMCE_DIR}/RtResources/CMake/Modules")

@@ -17,11 +17,8 @@
  */
 
 #include <SMCE/Toolchain.hpp>
-
-
 #include <stdexcept>
 #include <string>
-
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -48,7 +45,6 @@ namespace bp = boost::process;
 
 namespace smce {
 namespace detail {
-
 
 struct toolchain_error_category : public std::error_category {
   public:
@@ -327,35 +323,33 @@ std::error_code Toolchain::compile(Sketch& sketch) noexcept {
 
 std::vector<Toolchain::CompilerInformation> Toolchain::find_compilers() {
     std::vector<std::string> gccVersionsCpp11 = {"4.3", "4.4", "4.5", "4.6", "4.7", "4.8"};
-    std::vector<std::string> clangVersionsCpp11 = {"13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3.9", "3.8",
-                                                   "3.7", "3.6", "3.5", "3.4", "3.3"};
+    std::vector<std::string> clangVersionsCpp11 = {"13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3.9", "3.8", "3.7", "3.6", "3.5", "3.4", "3.3"};
     std::vector<Toolchain::CompilerInformation> compilers;
     std::string compiler_path;
 
-    compiler_path = find_MSVC();
-    if(!compiler_path.empty())
-        compilers.push_back(create_compiler_information(compiler_path, "msvc", "TBD"));
+    find_MSVC_buildTools(compilers);
+    find_MSVC(compilers);
 
-    if (default_compiler() != "MSVC") {
-        search_for_compilers("g++", gccVersionsCpp11, compilers);
-    }
+    if (default_compiler() != "MSVC")
+        look_for_compilers_on_path("g++", gccVersionsCpp11, compilers);
 
-    search_for_compilers("clang++", clangVersionsCpp11, compilers);
+    look_for_compilers_on_path("clang++", clangVersionsCpp11, compilers);
 
-    compiler_path = search_env_path("clang-cl");
-    if(!compiler_path.empty())
-        compilers.push_back(create_compiler_information(compiler_path, "clang-cl", "TBD"));
+    look_for_compilers_on_path("clang-cl", {""} ,compilers);
 
     return compilers;
 }
 
 bool Toolchain::select_compiler(Toolchain::CompilerInformation& compiler) {
-    if(compiler.name.empty()) {
+    if (compiler.name.empty()) {
         std::cerr << "No compiler selected!";
         return false;
     }
 
-    selected_toolchain_file = "-DSMCE_TOOLCHAIN=" + boost::filesystem::current_path().string() + "/../../CMake/Toolchain/toolchain_" + compiler.name + "_" + compiler.version + ".cmake";
+    //selected_toolchain_file = "-DSMCE_TOOLCHAIN=" + boost::filesystem::current_path().string() + "/../../CMake/Toolchain/toolchain_" + compiler.name + "_" + compiler.version + ".cmake";
+
+    selected_toolchain_file = "-DSMCE_TOOLCHAIN=" + boost::filesystem::current_path().string() + "/../../CMake/Toolchain/test.cmake";
+
 #if BOOST_OS_WINDOWS
     boost::replace_all(selected_toolchain_file, "\\", "/");
 #endif
@@ -363,14 +357,18 @@ bool Toolchain::select_compiler(Toolchain::CompilerInformation& compiler) {
     return true;
 }
 
-std::string Toolchain::find_MSVC() {
+std::vector<Toolchain::CompilerInformation> Toolchain::find_MSVC_buildTools(std::vector<Toolchain::CompilerInformation>& compilers) {
 
     bp::ipstream vswhere_out;
-    std::string result;
+    std::string version;
 
     // clang-format off
     bp::child c(
-        "vswhere -latest -requires Microsoft.Component.MSBuild -find MSBuild/**/Bin/MSBuild.exe",
+#if BOOST_OS_WINDOWS
+        "powershell.exe -command \"& {vswhere -latest -products 'Microsoft.VisualStudio.Product.BuildTools' -property installationPath}\"",
+#else
+        "vswhere -latest -products 'Microsoft.VisualStudio.Product.BuildTools' -property installationPath",
+#endif
         bp::std_out > vswhere_out
 #if BOOST_OS_WINDOWS
         , bp::windows::create_no_window
@@ -378,13 +376,71 @@ std::string Toolchain::find_MSVC() {
     );
     // clang-format on
 
-    std::getline(vswhere_out, result);
+    for (std::string line; std::getline(vswhere_out, line);) {
+
+        if (line.at(line.length() - 1) == '\r') {
+            line.pop_back();
+        }
 
 #if BOOST_OS_WINDOWS
-    boost::replace_all(result, "\\", "/");
+        boost::replace_all(line, "\\", "/");
 #endif
 
-    return result;
+        if (!line.empty()) {
+            if (boost::filesystem::exists(line + "/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt")) {
+                boost::filesystem::ifstream file(line + "/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt");
+
+                getline(file, version);
+            }
+            if (boost::filesystem::exists(line + "/VC/Tools/MSVC/" + version + "/bin/HostX64/x64/cl.exe")) {
+                compilers.push_back(create_compiler_information(line + "/VC/Tools/MSVC/" + version + "/bin/HostX64/x64/cl.exe", "msvc (buildTool)", version));
+            }
+        }
+    }
+
+
+
+    return compilers;
+}
+
+std::vector<Toolchain::CompilerInformation> Toolchain::find_MSVC(std::vector<Toolchain::CompilerInformation>& compilers) {
+
+    bp::ipstream vswhere_out;
+    std::string version;
+
+    // clang-format off
+    bp::child c(
+        "vswhere -property installationPath",
+        bp::std_out > vswhere_out
+#if BOOST_OS_WINDOWS
+        , bp::windows::create_no_window
+#endif
+    );
+    // clang-format on
+
+    for (std::string line; std::getline(vswhere_out, line);) {
+
+        if (line.at(line.length() - 1) == '\r') {
+            line.pop_back();
+        }
+
+#if BOOST_OS_WINDOWS
+        boost::replace_all(line, "\\", "/");
+#endif
+
+        if (!line.empty()) {
+            if (boost::filesystem::exists(line + "/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt")) {
+                boost::filesystem::ifstream file(line + "/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt");
+
+                getline(file, version);
+            }
+            if (boost::filesystem::exists(line + "/VC/Tools/MSVC/" + version + "/bin/HostX64/x64/cl.exe")) {
+                compilers.push_back(create_compiler_information(line + "/VC/Tools/MSVC/" + version + "/bin/HostX64/x64/cl.exe", "msvc", version));
+            }
+        }
+    }
+
+    return compilers;
 }
 
 std::string Toolchain::search_env_path(const std::string& compiler) {
@@ -398,18 +454,17 @@ std::string Toolchain::search_env_path(const std::string& compiler) {
     return path;
 }
 
-void Toolchain::search_for_compilers(const std::string& compiler, const std::vector<std::string>& versions, std::vector<Toolchain::CompilerInformation>& compilers) {
+void Toolchain::look_for_compilers_on_path(const std::string& compiler, const std::vector<std::string>& versions, std::vector<Toolchain::CompilerInformation>& compilers) {
 
     std::string compiler_path = search_env_path(compiler);
-    if(!compiler_path.empty())
+    if (!compiler_path.empty())
         compilers.push_back(create_compiler_information(compiler_path, compiler, "TBD"));
 
-    for(int i = 0; i < (int)versions.size(); i++) {
-        compiler_path = search_env_path(compiler + "-" + versions[i]);
-        if(!compiler_path.empty())
-            compilers.push_back(create_compiler_information(compiler_path, compiler + "-" + versions[i], "TBD"));
+    for (const auto& version: versions) {
+        compiler_path = search_env_path(compiler + "-" + version);
+        if (!compiler_path.empty())
+            compilers.push_back(create_compiler_information(compiler_path, compiler + "-" + version, "TBD"));
     }
-
 }
 
 Toolchain::CompilerInformation Toolchain::create_compiler_information(const std::string& path, const std::string& name, const std::string& version) {
@@ -426,11 +481,11 @@ Toolchain::CompilerInformation Toolchain::create_compiler_information(const std:
 
 bool Toolchain::generate_toolchain_file(Toolchain::CompilerInformation& compiler) {
 
-    boost::filesystem::path path{"../../CMake/Toolchain/toolchain_"+compiler.name+"_"+compiler.version+".cmake"};
+    boost::filesystem::path path{"../../CMake/Toolchain/toolchain_" + compiler.name + "_" + compiler.version + ".cmake"};
     boost::filesystem::ofstream ofs{path};
 
-    if(ofs.is_open()) {
-        ofs << "set(CMAKE_CXX_COMPILER \""+compiler.path+"\")";
+    if (ofs.is_open()) {
+        ofs << "set(CMAKE_CXX_COMPILER \"" + compiler.path + "\")";
         ofs.close();
         return true;
     }
