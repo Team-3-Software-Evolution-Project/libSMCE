@@ -239,6 +239,7 @@ TEST_CASE("Board - Check conditions for attach_sketch and reset", "[Board]") {
     REQUIRE(br.status() == smce::Board::Status::suspended);
     REQUIRE_FALSE(br.attach_sketch(sk2));
     REQUIRE_FALSE(br.reset());
+    REQUIRE(br.resume());
 
     // Board is stopped => Attaching sketches and resetting possible
     REQUIRE(br.stop());
