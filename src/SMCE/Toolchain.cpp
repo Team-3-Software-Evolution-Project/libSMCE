@@ -22,10 +22,11 @@
 #include <string>
 #include <system_error>
 #include <boost/predef.h>
-#include <boost/process.hpp>
 #if BOOST_OS_WINDOWS
 #    include <boost/process/windows.hpp>
 #endif
+#include <boost/process.hpp>
+
 #include <SMCE/PluginManifest.hpp>
 #include <SMCE/SMCE_iface.h>
 #include <SMCE/Sketch.hpp>
@@ -54,6 +55,8 @@ struct toolchain_error_category : public std::error_category {
             return "Resource directory is a file";
         case toolchain_error::cmake_not_found:
             return "CMake not found in PATH";
+        case toolchain_error::cmake_unknown_output:
+            return "CMake output unrecognized";
         case toolchain_error::invalid_plugin_name:
             return "Plugin name is \".\", \"..\", or contains a forward slash";
         case toolchain_error::sketch_invalid:
